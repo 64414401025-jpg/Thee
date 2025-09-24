@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แดชบอร์ดการวิเคราะห์พฤติกรรมผู้บริโภค</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Kanit', 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Softer light gray */
+            color: #1a202c;
+        }
+        
+        .container {
+            max-width: 1280px;
+            margin: auto;
+            padding: 2rem;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* Slightly more rounded */
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .chart-container {
+            height: 450px; /* Slightly taller for better data visualization */
+        }
+        
+        .table-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            overflow: hidden; /* Contains the border-radius */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1.25rem 1.5rem; /* More generous padding */
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* Softer border color */
+        }
+
+        th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #fbfdff;
+        }
+        
+        .filter-input {
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: 0.75rem;
+            border: 1px solid #cbd5e0;
+            background-color: #f7fafc;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #4c51bf;
+            box-shadow: 0 0 0 3px rgba(76, 81, 191, 0.2);
+        }
+
+        /* Gradient cards */
+        .gradient-blue {
+            background: linear-gradient(135deg, #4c51bf, #667eea);
+            color: white;
+        }
+        .gradient-purple {
+            background: linear-gradient(135deg, #805ad5, #a3bffa);
+            color: white;
+        }
+        .gradient-teal {
+            background: linear-gradient(135deg, #38b2ac, #81e6d9);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 antialiased">
+
+    <div class="container mx-auto">
+        <header class="flex flex-col items-center justify-center pt-8 pb-4">
+            <h1 class="text-4xl font-bold text-gray-900 tracking-tight mb-2">
+                แดชบอร์ดการวิเคราะห์พฤติกรรมผู้บริโภค
+            </h1>
+            <p class="text-lg text-gray-500">
+                ข้อมูลเชิงลึกและการวิเคราะห์แบบเรียลไทม์
+            </p>
+        </header>
+
+        <div class="card mb-8 text-center bg-white p-6 shadow-sm">
+            <p id="statusMessage" class="text-lg text-gray-700 font-medium">กำลังโหลดข้อมูล...</p>
+        </div>
+
+        <div id="dashboardContent" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+                <div class="card text-center gradient-blue transform hover:scale-105 transition-transform duration-300">
+                    <p class="text-sm font-light uppercase opacity-90">จำนวนผู้ใช้งานทั้งหมด</p>
+                    <p id="totalUsers" class="text-5xl font-bold mt-2">0</p>
+                </div>
+                <div class="card text-center gradient-purple transform hover:scale-105 transition-transform duration-300">
+                    <p class="text-sm font-light uppercase opacity-90">คะแนนความพึงพอใจเฉลี่ย</p>
+                    <p id="avgSatisfaction" class="text-5xl font-bold mt-2">0</p>
+                </div>
+                <div class="card text-center gradient-teal transform hover:scale-105 transition-transform duration-300">
+                    <p class="text-sm font-light uppercase opacity-90">การใช้จ่ายเฉลี่ย (บาท)</p>
+                    <p id="avgSpending" class="text-5xl font-bold mt-2">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+                <div class="card col-span-1 lg:col-span-2 h-full">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">จำนวนผู้ใช้ตามแพลตฟอร์ม</h2>
+                    <div class="chart-container">
+                        <canvas id="platformChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="col-span-1 lg:col-span-3">
+                    <div class="table-container p-6 h-full flex flex-col">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4">ข้อมูลผู้ใช้งานทั้งหมด</h2>
+                        <input type="text" id="filterInput" class="filter-input" placeholder="ค้นหาข้อมูลผู้ใช้งาน..."/>
+                        <div class="overflow-y-auto flex-1 -mx-6">
+                            <table id="dataTable" class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>อายุ</th>
+                                        <th>เพศ</th>
+                                        <th>แพลตฟอร์ม</th>
+                                        <th>การใช้จ่ายเฉลี่ย</th>
+                                        <th>คะแนนความพึงพอใจ</th>
+                                        <th>ความถี่ในการซื้อ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let myChart;
+        const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRl9RQwIx2jNOe6E4MrF7vWojWS6s30u9SJmwMKmgvwVpStDeAwQAr6_h01zJmRhvqFx03gFtjznfeB/pub?gid=0&single=true&output=csv';
+
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',').map(header => header.trim());
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(value => value.trim());
+                if (values.length !== headers.length) continue;
+                const row = {};
+                for (let j = 0; j < headers.length; j++) {
+                    row[headers[j]] = values[j];
+                }
+                data.push(row);
+            }
+            return data;
+        }
+
+        function updateDashboard(data) {
+            if (data.length === 0) {
+                document.getElementById('statusMessage').innerText = 'ไม่พบข้อมูลในไฟล์ CSV';
+                return;
+            }
+
+            const totalUsers = data.length;
+            const avgSatisfaction = (data.reduce((sum, row) => sum + parseFloat(row.satisfaction_score), 0) / totalUsers).toFixed(2);
+            const avgSpending = (data.reduce((sum, row) => sum + parseFloat(row.avg_spending), 0) / totalUsers).toFixed(2);
+
+            document.getElementById('totalUsers').innerText = totalUsers.toLocaleString();
+            document.getElementById('avgSatisfaction').innerText = avgSatisfaction;
+            document.getElementById('avgSpending').innerText = `${avgSpending} ฿`;
+
+            const platforms = data.map(row => row.preferred_platform);
+            const platformCounts = platforms.reduce((acc, platform) => {
+                acc[platform] = (acc[platform] || 0) + 1;
+                return acc;
+            }, {});
+
+            const ctx = document.getElementById('platformChart').getContext('2d');
+            if (myChart) {
+                myChart.destroy();
+            }
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(platformCounts),
+                    datasets: [{
+                        label: 'จำนวนผู้ใช้งาน',
+                        data: Object.values(platformCounts),
+                        backgroundColor: [
+                            'rgba(76, 81, 191, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(251, 191, 36, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                        ],
+                        borderColor: [
+                            'rgba(76, 81, 191, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(251, 191, 36, 1)',
+                            'rgba(239, 68, 68, 1)',
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'จำนวนผู้ใช้งาน'
+                            },
+                            grid: {
+                                color: '#e2e8f0',
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'แพลตฟอร์ม'
+                            },
+                            grid: {
+                                display: false,
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1a202c',
+                            bodyColor: '#4a5568',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            cornerRadius: 6,
+                        }
+                    }
+                }
+            });
+
+            const dataTableBody = document.querySelector('#dataTable tbody');
+            function renderTable(dataToRender) {
+                dataTableBody.innerHTML = '';
+                dataToRender.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.customer_id}</td>
+                        <td>${row.age}</td>
+                        <td>${row.gender}</td>
+                        <td>${row.preferred_platform}</td>
+                        <td>${parseFloat(row.avg_spending).toFixed(2)}</td>
+                        <td>${parseFloat(row.satisfaction_score).toFixed(1)}</td>
+                        <td>${row.shopping_frequency}</td>
+                    `;
+                    dataTableBody.appendChild(tr);
+                });
+            }
+
+            renderTable(data);
+
+            const filterInput = document.getElementById('filterInput');
+            filterInput.value = '';
+            filterInput.onkeyup = (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredData = data.filter(row => {
+                    return Object.values(row).some(value => {
+                        return String(value).toLowerCase().includes(searchTerm);
+                    });
+                });
+                renderTable(filteredData);
+            };
+
+            document.getElementById('dashboardContent').classList.remove('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusMessage = document.getElementById('statusMessage');
+
+            fetch(DATA_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    const data = parseCSV(csvText);
+                    updateDashboard(data);
+                    statusMessage.innerText = 'ข้อมูลถูกโหลดเรียบร้อยแล้ว';
+                })
+                .catch(error => {
+                    console.error('เกิดข้อผิดพลาดในการโหลดข้อมูล:', error);
+                    statusMessage.innerText = `ไม่สามารถโหลดข้อมูลได้: ${error.message}`;
+                    document.getElementById('dashboardContent').classList.add('hidden');
+                });
+        });
+    </script>
+</body>
+</html>
